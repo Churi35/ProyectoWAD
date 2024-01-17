@@ -4,9 +4,16 @@
  */
 package servlets;
 
+import conexion.ConexionDB;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -18,6 +25,12 @@ import javax.servlet.http.HttpSession;
  * @author Uriel Perez Cubias
  */
 public class AgregarCarrito extends HttpServlet {
+    
+    ConexionDB coneccion = new ConexionDB();
+    
+    Connection con;
+    PreparedStatement ps;
+    ResultSet rs;
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -36,16 +49,31 @@ public class AgregarCarrito extends HttpServlet {
         byte pastel = Byte.parseByte(request.getParameter("pastel"));
         int cantidad = Integer.parseInt(request.getParameter("cantidad"));
         byte origen =Byte.parseByte(request.getParameter("origen"));
+        int max = -1;
+        String query = "select * from pasteles where `Pastel_ID`= "+pastel;
         if(request.getParameter("peticion")!=null)
         {
             Carrito.remove(pastel);
         }
         else
         {
+            try
+            {
+                con=coneccion.getConnection();
+                ps=con.prepareStatement(query);
+                rs=ps.executeQuery();
+                while(rs.next())
+                    max=rs.getInt("Stock_Pastel");
+            } catch (SQLException ex) {
+                Logger.getLogger(AgregarCarrito.class.getName()).log(Level.SEVERE, null, ex);
+            }
             if(cantidad !=0)
             {
                 if(Carrito.containsKey(pastel))
-                    Carrito.put(pastel, Carrito.get(pastel)+cantidad);
+                    if(Carrito.get(pastel)+cantidad>max)
+                        Carrito.put(pastel, max);
+                    else
+                        Carrito.put(pastel, Carrito.get(pastel)+cantidad);
                 else
                     Carrito.put(pastel, cantidad);
 
