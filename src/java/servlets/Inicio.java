@@ -17,75 +17,67 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-/**
- *
- * @author Uriel Perez Cubias
- */
 public class Inicio extends HttpServlet {
-    
+
     ConexionDB coneccion = new ConexionDB();
-    
     Connection con;
     PreparedStatement ps;
     ResultSet rs;
 
     private String header;
-    
+
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        //Inicio de sesion general
+        // Inicio de sesión general
         HttpSession sesion = request.getSession();
         Integer ID = (Integer) sesion.getAttribute("User.ID");
-        if(ID==null)
+        if (ID == null) {
             header = Constantes.getHeaderSin();
-        else
+        } else {
             header = Constantes.getHeaderCon();
-        
+        }
+
         response.setContentType("text/html;charset=UTF-8");
         String query = "select * from pasteles";
         String result = "";
-        try{
+        try {
             byte contador = 0;
-            con=coneccion.getConnection();
-            ps=con.prepareStatement(query);
-            rs=ps.executeQuery();
+            con = coneccion.getConnection();
+            ps = con.prepareStatement(query);
+            rs = ps.executeQuery();
             result += "<tr>\n";
-            while(rs.next()){
-                if(rs.getInt("Stock_Pastel") != 0)
-                {
+            while (rs.next()) {
+                if (rs.getInt("Stock_Pastel") != 0) {
                     result += "<td>\n";
-                    result += "<div class=\"card card-body\">\n" +
-    "                            <p class=\"text-center\">"+rs.getString("Titulo_Pastel")+"</p>"+
-    "                            <a href=\"/Pasteleria/Descripcionpastel?id="+rs.getInt("Pastel_ID")+"\"><img src=\"."+rs.getString("Imagen_Pastel")+"\"></a>\n" +
-    "                            <div class=\"text-center\">\n" +
-    "                                <form action=\"/Pasteleria/AgregarCarrito\">\n" +
-    "                                    <input name=\"pastel\" type=\"hidden\" value=\""+rs.getInt("Pastel_ID")+"\">\n"+
-    "                                    <input name=\"origen\" type=\"hidden\" value=\"0\">\n"+
-    "                                    <p>Costo: $"+rs.getInt("Costo_u_Pastel")+"</p>\n"+
-    "                                    <input name=\"cantidad\" type=\"number\" class=\"form-contro\" value=\"0\" min=\"0\" max=\""+rs.getInt("Stock_Pastel")+"\">\n";
-                    if(ID==null)
-                        result+= "<a href=\"/Pasteleria/Login\" class=\"btn btn-primary\">Agregar a Carrito</a>";
+                    result += "<div class=\"card card-body\">\n"
+                            + "                            <p class=\"text-center\">" + rs.getString("Titulo_Pastel")
+                            + "</p>" + "                            <a href=\"/Pasteleria/Descripcionpastel?id="
+                            + rs.getInt("Pastel_ID") + "\"><img src=\"." + rs.getString("Imagen_Pastel")
+                            + "\"></a>\n" + "                            <div class=\"text-center\">\n"
+                            + "                                <form action=\"/Pasteleria/AgregarCarrito\">\n"
+                            + "                                    <input name=\"pastel\" type=\"hidden\" value=\""
+                            + rs.getInt("Pastel_ID") + "\">\n" + "                                    <input name=\"origen\" type=\"hidden\" value=\"0\">\n"
+                            + "                                    <p>Costo: $" + rs.getInt("Costo_u_Pastel") + "</p>\n"
+                            + "                                    <input name=\"cantidad\" type=\"number\" class=\"form-control\" value=\"0\" min=\"0\" max=\""
+                            + rs.getInt("Stock_Pastel") + "\">\n";
+                    if (ID == null)
+                        result += "<a href=\"/Pasteleria/Login\" class=\"btn btn-primary\">Agregar a Carrito</a>";
                     else
-                        result+=
-    "                                    <button type=\"submit\" class=\"btn btn-primary\" name=\"Agreagar\">Agregar a Carrito</button> \n";
-                    result+=
-    "                                </form>\n" +
-    "                            </div>\n" +
-    "                        </div>\n"+
-    "                       </td>\n";
+                        result += "                                    <button type=\"submit\" class=\"btn btn-primary\" name=\"Agreagar\">Agregar a Carrito</button> \n";
+                    result += "                                </form>\n" + "                            </div>\n"
+                            + "                        </div>\n" + "                       </td>\n";
                     contador++;
                 }
-                
-                if(contador==4)
-                    result+="</tr>\n"
-                          + "<tr>";
+
+                if (contador == 4)
+                    result += "</tr>\n" + "<tr>";
             }
             result += "</tr>\n";
-        }catch (Exception e) {
+        } catch (Exception e) {
         }
+
         try (PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
-            
+            /* TODO output your page here. You may use the following sample code. */
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
@@ -96,53 +88,47 @@ public class Inicio extends HttpServlet {
             out.println("<body>");
             out.println(header);
             out.println("<br>");
-            out.println("<div class=\"col-md-4\">\n" +
-"            <table class=\"table\">");
+            out.println("<div class=\"col-md-4\">\n" + "            <table class=\"table\">");
+
+            // Mostrar el tiempo de sesión si el usuario está autenticado
+            Long loginTime = (Long) sesion.getAttribute("loginTime");
+            if (loginTime != null) {
+                long currentTime = System.currentTimeMillis();
+                long elapsedTime = currentTime - loginTime;
+
+                // Convertir milisegundos a minutos y segundos
+                long minutes = (elapsedTime / (1000 * 60)) % 60;
+                long seconds = (elapsedTime / 1000) % 60;
+
+                out.println("<p>Tiempo conectado: " + minutes + " minutos y " + seconds + " segundos</p>");
+            } else {
+                out.println("<p>No has iniciado sesión.</p>");
+            }
+
             out.println(result);
-            out.println("</table>\n" +
-"            </div>");
+            out.println("</table>\n" + "            </div>");
             out.println("</body>");
             out.println("</html>");
         }
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
     }
 
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
     @Override
     public String getServletInfo() {
         return "Short description";
-    }// </editor-fold>
+    }
+    // </editor-fold>
 
 }

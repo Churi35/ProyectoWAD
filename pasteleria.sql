@@ -147,3 +147,21 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+
+
+CREATE TABLE `historial_compras` (
+  `Compra_ID` int(11) NOT NULL AUTO_INCREMENT,
+  `User_ID` int(11) NOT NULL,
+  `Fecha_Compra` datetime NOT NULL,
+  `Compra_Productos` varchar(100) NOT NULL,
+  `Compra_Total` double NOT NULL,
+  PRIMARY KEY (`Compra_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+ALTER TABLE `pedidos`
+  ADD COLUMN `Fecha_Pedido` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `Pedido_Total`;
+  
+ALTER TABLE `historial_compras`
+  ADD CONSTRAINT `Historial_Users` FOREIGN KEY (`User_ID`) REFERENCES `users` (`User_ID`);

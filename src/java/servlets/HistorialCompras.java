@@ -4,83 +4,110 @@
  */
 package servlets;
 
+import conexion.ConexionDB;
+
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
-/**
- *
- * @author Uriel Perez Cubias
- */
 public class HistorialCompras extends HttpServlet {
 
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
+    ConexionDB conexionDB = new ConexionDB();
+
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        
+
+        HttpSession session = request.getSession();
+        Integer userID = (Integer) session.getAttribute("User.ID");
+
         try (PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Servlet HistorialCompras</title>");            
+            out.println("<title>Historial de Compras</title>");
+            // Agregar enlaces a los estilos de Bootstrap (asegúrate de tener acceso a ellos)
+            out.println("<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\">");
             out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>Servlet HistorialCompras at " + request.getContextPath() + "</h1>");
+            out.println("<body class=\"container\">");
+
+            if (userID != null) {
+                out.println("<h1 class=\"mt-4\">Historial de Compras para el Usuario " + userID + "</h1>");
+                mostrarHistorialCompras(out, userID);
+                out.println("<a class=\"btn btn-primary mt-4\" href=\"http://localhost:8081/Pasteleria/Inicio\">Retroceder</a>");
+            } else {
+                out.println("<p class=\"mt-4\">Debes iniciar sesión para ver el historial de compras.</p>");
+            }
+
             out.println("</body>");
             out.println("</html>");
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
+    private void mostrarHistorialCompras(PrintWriter out, Integer userID) {
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            con = conexionDB.getConnection();
+            String query = "SELECT * FROM historial_compras WHERE User_ID = ? ORDER BY Fecha_Compra DESC";
+            ps = con.prepareStatement(query);
+            ps.setInt(1, userID);
+            rs = ps.executeQuery();
+
+            // Utilizar clases de Bootstrap para la tabla
+            out.println("<table class=\"table table-bordered mt-4\">");
+            out.println("<thead class=\"thead-dark\"><tr><th>Fecha de Compra</th><th>Productos</th><th>Total</th></tr></thead>");
+            out.println("<tbody>");
+
+            while (rs.next()) {
+                out.println("<tr>");
+                out.println("<td>" + rs.getString("Fecha_Compra") + "</td>");
+                out.println("<td>" + rs.getString("Compra_Productos") + "</td>");
+                out.println("<td>" + rs.getDouble("Compra_Total") + "</td>");
+                out.println("</tr>");
+            }
+
+            out.println("</tbody>");
+            out.println("</table>");
+
+        } catch (SQLException ex) {
+            out.println("<p>Error al recuperar el historial de compras: " + ex.getMessage() + "</p>");
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (ps != null) ps.close();
+                if (con != null) con.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
     }
 
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
     @Override
     public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
-
+        return "Historial de Compras";
+    }
 }

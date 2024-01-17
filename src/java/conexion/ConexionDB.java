@@ -8,18 +8,23 @@ package conexion;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
+
 
 public class ConexionDB {
-    Connection con;
-    public ConexionDB(){
-        try {
-            Class.forName("com.mysql.jdbc.Driver");
-            con=DriverManager.getConnection("jdbc:mysql://localhost:3306/Pasteleria","root","");            
-        } catch (Exception e) {
-            System.err.println("Error"+e);
-        }
+    private static final String URL = "jdbc:mysql://localhost:3306/pasteleria?useSSL=false&serverTimezone=UTC";
+    private static final String USER = "root";
+    private static final String PASSWORD = "Kali1516";
+    
+    public static Connection getConnection() {
+    try {
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        return DriverManager.getConnection(URL, USER, PASSWORD);
+    } catch (ClassNotFoundException | SQLException e) {
+        e.printStackTrace();
+        throw new RuntimeException("Error al establecer la conexión con la base de datos", e);
     }
-    public Connection getConnection(){
-        return con;
-    }
+}
+
+    
 }
